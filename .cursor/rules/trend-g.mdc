@@ -1,0 +1,71 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+1.agent로 질문할때는 항상 수정 또는 코딩 제안만 하지 말고 바로 수정 및 코딩해주세요.
+2.해당 프로젝트는 vercel 외부서버로 배포할 프로젝트 인걸 명심하십시요.
+3.코딩할때 항상 vercel 배포를 고려하여 주시기 바랍니다.
+4.개발시 반응형 디자인으로 개발 되며, 모든 디자인 및 스타일 적용시 모바일기기에도 최적화된 디자인과 스타일을 적용해 주세요.
+
+
+
+프로젝트 구조 분석
+
+Next.js를 기반으로 한 풀스택 애플리케이션으로 구성하는 것이 적절해 보입니다.
+Vercel 배포를 고려할 때 Next.js는 최적의 선택입니다.
+
+데이터 수집 방식
+
+각 검색엔진별 데이터 수집 방식이 잘 정리되어 있습니다.
+하지만 몇 가지 개선사항을 제안드립니다:
+네이버 데이터랩 API를 공식적으로 사용하는 것이 크롤링보다 안정적
+Google Trends API는 pytrends 대신 공식 API 사용 고려
+다음의 경우 공식 API가 없어 크롤링이 불가피
+
+아키텍처 개선 제안
+
+현재 제안된 구조에서 다음과 같은 개선이 필요해 보입니다:
+Edge API Routes 대신 Serverless Functions 사용
+데이터 캐싱을 위해 Redis나 Vercel KV 사용 고려
+실시간 업데이트를 위한 WebSocket 구현 검토
+
+비용 최적화 방안
+
+Vercel의 무료 플랜을 활용하되, 다음과 같은 전략이 필요합니다:
+정적 생성(SSG)을 최대한 활용
+API 호출 최소화를 위한 캐싱 전략
+GitHub Actions를 통한 주기적 데이터 업데이트
+
+기술 스택 제안
+
+Frontend:
+- Next.js 14
+- Tailwind CSS (반응형 디자인)
+- React-Query (데이터 페칭)
+- D3.js (워드클라우드 시각화)
+
+Backend:
+- Next.js API Routes
+- Redis/Vercel KV (캐싱)
+- Puppeteer/Playwright (크롤링)
+
+Deployment:
+- Vercel
+- GitHub Actions (자동화)
+
+구현 우선순위
+
+기본 UI/UX 구현
+데이터 수집 파이프라인 구축
+캐싱 시스템 구현
+실시간 업데이트 시스템
+성능 최적화
+
+추가 고려사항
+
+모바일 최적화
+접근성
+SEO 최적화
+
+에러 처리 및 폴백 메커니즘
