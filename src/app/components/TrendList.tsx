@@ -4,6 +4,8 @@ interface TrendItem {
   keyword: string;
   rank: number;
   searchCount?: number;
+  diff?: number;
+  ratio?: number;
 }
 
 interface TrendListProps {
@@ -13,17 +15,47 @@ interface TrendListProps {
 }
 
 export default function TrendList({ title, items, type }: TrendListProps) {
+  if (!items || items.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">{title}</h2>
+        <div className="text-gray-500 text-center py-8">데이터가 없습니다.</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      <h2 className="text-xl font-bold mb-4">{title}</h2>
-      <div className="space-y-2">
+    <div className="bg-white rounded-xl shadow-lg p-6">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">{title}</h2>
+      <div className="space-y-3">
         {items.map((item) => (
           <div
             key={item.keyword}
-            className="flex items-center justify-between p-2 hover:bg-gray-50 rounded"
+            className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors duration-150"
           >
-            <span className="font-medium">{item.keyword}</span>
-            <span className="text-gray-500">#{item.rank}</span>
+            <div className="flex items-center gap-3">
+              <span className={`font-bold text-lg ${
+                item.rank <= 3 
+                  ? 'text-red-500' 
+                  : 'text-gray-400'
+              }`}>
+                {item.rank}
+              </span>
+              <span className="font-medium text-gray-800">{item.keyword}</span>
+            </div>
+            <div className="flex items-center gap-4 min-w-[120px] justify-end">
+              {typeof item.searchCount === 'number' && (
+                <span className="text-sm text-gray-500 w-16 text-right">
+                  {item.searchCount.toLocaleString()}
+                </span>
+              )}
+              {typeof item.diff === 'number' && (
+                <span className={`text-xs font-semibold ${item.diff > 0 ? 'text-green-600' : item.diff < 0 ? 'text-red-600' : 'text-gray-400'}`}>▲ {item.diff}</span>
+              )}
+              {typeof item.ratio === 'number' && (
+                <span className="text-xs text-blue-500 font-semibold">{item.ratio > 0 ? '+' : ''}{item.ratio}%</span>
+              )}
+            </div>
           </div>
         ))}
       </div>
