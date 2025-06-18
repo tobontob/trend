@@ -13,7 +13,9 @@
     "@types/d3-cloud": "^1.2.9",
     "axios": "^1.10.0",
     "d3-cloud": "^1.2.7",
+    "google-trends-api": "^4.9.2",
     "next": "15.3.3",
+    "puppeteer": "^24.10.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
