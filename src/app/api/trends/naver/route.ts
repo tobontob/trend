@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import axios from 'axios';
 import { TREND_KEYWORDS } from './keywords';
 
-// 10분 캐싱
-const CACHE_DURATION = 10 * 60 * 1000; // 10분
+// 1시간 캐싱
+const CACHE_DURATION = 60 * 60 * 1000; // 1시간
 const CACHE: Record<string, { data: any; timestamp: number }> = {};
 
 export async function GET(request: Request) {
@@ -52,21 +52,32 @@ export async function GET(request: Request) {
         break;
     }
 
-    // 모든 카테고리의 키워드를 하나의 배열로 합치기 (상위 10개만)
+    // 모든 카테고리의 키워드를 하나의 배열로 합치기 (최대 20개까지 출력)
     const allKeywords = Object.values(TREND_KEYWORDS)
       .reduce((acc, category) => [...acc, ...category.keywords], [] as string[])
-      .slice(0, 10);
+      .slice(0, 30); // 넉넉하게 30개까지 시도
 
-    // 각 키워드별로 별도의 API 요청
+    // 5개씩 나눠서 여러 번 요청
+    const chunkSize = 5;
+    const keywordChunks: string[][] = [];
+    for (let i = 0; i < allKeywords.length; i += chunkSize) {
+      keywordChunks.push(allKeywords.slice(i, i + chunkSize));
+    }
+
+    // 각 요청마다 keywordGroups 개수 콘솔 출력
+    keywordChunks.forEach((chunk, idx) => {
+      console.log(`요청 ${idx + 1}: keywordGroups 개수 = ${chunk.length}, 키워드 = [${chunk.join(', ')}]`);
+    });
+
     const responses = await Promise.all(
-      allKeywords.map(keyword =>
+      keywordChunks.map(chunk =>
         axios.post(
           'https://openapi.naver.com/v1/datalab/search',
           {
             startDate: startDate.toISOString().split('T')[0],
             endDate: today.toISOString().split('T')[0],
             timeUnit,
-            keywordGroups: [{ groupName: keyword, keywords: [keyword] }]
+            keywordGroups: chunk.map(keyword => ({ groupName: keyword, keywords: [keyword] }))
           },
           {
             headers: {
@@ -76,7 +87,7 @@ export async function GET(request: Request) {
             }
           }
         ).catch(error => {
-          console.error(`API Error for keyword ${keyword}:`, error?.response?.data || error);
+          console.error(`API Error for keywords ${chunk.join(', ')}:`, error?.response?.data || error);
           return null;
         })
       )
@@ -84,29 +95,30 @@ export async function GET(request: Request) {
 
     // 응답 데이터 처리 및 변환
     const trendData: any[] = [];
-    responses.forEach((response, idx) => {
-      if (!response?.data?.results?.[0]?.data) return;
-      const result = response.data.results[0];
-      const dataArr = result.data;
-      if (!Array.isArray(dataArr) || dataArr.length < 2) return; // 데이터가 2개 미만이면 제외
-      const keyword = result.keywords[0];
-      const latest = dataArr[dataArr.length - 1]?.ratio ?? 0;
-      const previous = dataArr[0]?.ratio ?? 0;
-      const diff = latest - previous;
-      const ratio = previous !== 0 ? (diff / previous) * 100 : 0;
-      trendData.push({
-        keyword,
-        latest,
-        previous,
-        diff,
-        ratio
+    responses.forEach((response) => {
+      if (!response?.data?.results) return;
+      response.data.results.forEach((result: any) => {
+        const dataArr = result.data;
+        if (!Array.isArray(dataArr) || dataArr.length < 2) return; // 데이터가 2개 미만이면 제외
+        const keyword = result.keywords[0];
+        const latest = dataArr[dataArr.length - 1]?.ratio ?? 0;
+        const previous = dataArr[0]?.ratio ?? 0;
+        const diff = latest - previous;
+        const ratio = previous !== 0 ? (diff / previous) * 100 : 0;
+        trendData.push({
+          keyword,
+          latest,
+          previous,
+          diff,
+          ratio
+        });
       });
     });
 
-    // 변화량(diff) 기준으로 정렬, 상위 10개만
+    // 변화량(diff) 기준으로 정렬, 상위 20개만
     const sorted = trendData
       .sort((a, b) => b.diff - a.diff)
-      .slice(0, 10)
+      .slice(0, 20)
       .map((item, idx) => ({
         keyword: item.keyword,
         rank: idx + 1,

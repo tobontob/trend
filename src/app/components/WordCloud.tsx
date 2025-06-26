@@ -92,7 +92,8 @@ export default function WordCloud({ words, width, height }: WordCloudProps) {
       ref={svgRef}
       width={width}
       height={height}
-      className="bg-white rounded-lg"
+      className="bg-white rounded-lg w-full h-auto max-w-[320px] sm:max-w-[400px] mx-auto"
+      style={{ minHeight: 120 }}
     />
   );
 } 
